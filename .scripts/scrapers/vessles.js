@@ -42,12 +42,11 @@ const getVesselWithPrefix = async () => {
         Authorization: `Bearer ${await getToken()}`,
       },
     };
-    console.log("prefix: ", key);
+
     const variabels =
       '{"bool":{"must":[{"prefix":{"document.vessel_description.general_information.vessel_name":"' +
       key.toLowerCase() +
       '"}}]}}';
-    console.log(variabels);
     const requestData = {
       operationName: "vesselSearch",
       variables: {
@@ -67,66 +66,70 @@ const getVesselWithPrefix = async () => {
         requestData,
         requestConfig
       );
-      return response.data.data;
+      return {
+        key,
+        response: response.data.data,
+      };
     } catch (error) {
       console.error("Error:", error);
     }
   }
 };
 
-const getVissels = async () => {
-  const requestConfig = {
-    headers: {
-      "X-Team": "322274",
-      Authorization: `Bearer ${await getToken()}`,
-    },
-  };
-
-  const requestData = encodeURIComponent(
-    '{"segments":[["other","FF69B4",[["asphalt_bitumen_tanker","FF69B4"],["barge","FF69B4"],["bunker_tanker_lng","FF69B4"],["bunker_tanker","FF69B4"],["cable_layer","FF69B4"],["car_roro","FF69B4"],["crane_ship","FF69B4"],["co2_gas_carrier","FF69B4"],["dredging","FF69B4"],["ferry","FF69B4"],["fishing","FF69B4"],["heavy_lift","FF69B4"],["hospital","FF69B4"],["ice_breaker","FF69B4"],["leisure","FF69B4"],["livestock","FF69B4"],["slop_receiving_vessel","FF69B4"],["passenger","FF69B4"],["passenger_general_cargo","FF69B4"],["pilot","FF69B4"],["pipe_layer","FF69B4"],["reefer","FF69B4"],["research","FF69B4"],["tug","FF69B4"],["training","FF69B4"],["water_Tanker","FF69B4"],["well_boats","FF69B4"],["unspecified","FF69B4"]]]],"mapStyle":"light","iconTemplate":"vessel-{{.Color}}-{{.NavigationalStatus}}-{{.MapStyle}}","vesselsAsGeometry":false}'
-  );
-
-  const response = await axios.get(
-    `https://api.maritimeoptima.com/vessel-features?request=${requestData}`,
-    requestConfig
-  );
-  return response.data;
-};
-
-const getVisselHistories = async () => {
-  const requestConfig = {
-    headers: {
-      "X-Team": "322274",
-      Authorization: `Bearer ${await getToken()}`,
-    },
-  };
-
-  const requestData = encodeURIComponent(
-    '{"segments":[["other","FF69B4",[["asphalt_bitumen_tanker","FF69B4"],["barge","FF69B4"],["bunker_tanker_lng","FF69B4"],["bunker_tanker","FF69B4"],["cable_layer","FF69B4"],["car_roro","FF69B4"],["crane_ship","FF69B4"],["co2_gas_carrier","FF69B4"],["dredging","FF69B4"],["ferry","FF69B4"],["fishing","FF69B4"],["heavy_lift","FF69B4"],["hospital","FF69B4"],["ice_breaker","FF69B4"],["leisure","FF69B4"],["livestock","FF69B4"],["slop_receiving_vessel","FF69B4"],["passenger","FF69B4"],["passenger_general_cargo","FF69B4"],["pilot","FF69B4"],["pipe_layer","FF69B4"],["reefer","FF69B4"],["research","FF69B4"],["tug","FF69B4"],["training","FF69B4"],["water_Tanker","FF69B4"],["well_boats","FF69B4"],["unspecified","FF69B4"]]]],"mapStyle":"light","iconTemplate":"vessel-{{.Color}}-{{.NavigationalStatus}}-{{.MapStyle}}","vesselsAsGeometry":true}'
-  );
-
-  const response = await axios.get(
-    `https://api.maritimeoptima.com/vessel-features?request=${requestData}`,
-    requestConfig
-  );
-  return response.data;
-};
-
-const storeVissels = async (name, imo, geometry) => {
-  const existVessel = await strapi.db.query("api::vessel.vessel").findOne({
-    select: ["imo"],
-    where: { imo: imo },
+const getPrefixId = async (key) => {
+  const prefix = await strapi.db
+  .query("api::vessel-prefix.vessel-prefix")
+  .findOne({
+    where: { prefix: key}
   });
+  return prefix
+}
+
+const storeVisselsWithPrefix = async (params) => {
+  const { imo, mmsi, name, position, key } = params;
+
+  const prefixId = await getPrefixId(key)
+  const existVessel = await strapi.db
+    .query("api::vessel-detail.vessel-detail")
+    .findOne({
+      select: ["imo", "histories"],
+      where: { imo: imo },
+    });
 
   if (!existVessel) {
-    await strapi.db.query("api::vessel.vessel").create({
+    await strapi.db.query("api::vessel-detail.vessel-detail").create({
       data: {
-        name: name,
-        imo: imo,
-        geometry: geometry,
+        imo,
+        mmsi,
+        name,
+        position,
+        histories: [position],
+        vessel_prefix: prefixId.id,
+      },
+    });
+  } else {
+    let historiesArray = existVessel.histories;
+
+    if (!Array.isArray(historiesArray)) {
+      historiesArray = [];
+    }
+
+    historiesArray.push(position);
+
+    await strapi.db.query("api::vessel-detail.vessel-detail").update({
+      where: { imo },
+      data: {
+        imo,
+        mmsi,
+        name,
+        position,
+        histories: historiesArray,
+        vessel_prefix: prefixId.id,
       },
     });
   }
+
+  console.log("SUCCESSS CREATED VESSEL");
 };
 
 const storeVisselHistorie = async (name, imo, geometry) => {
@@ -150,37 +153,20 @@ const storeVisselHistorie = async (name, imo, geometry) => {
 
 const main = async () => {
   try {
-    // const vissels = await getVissels();
-    // const visselsHistory = await getVisselHistories();
-
-    // // TODO: CREATE VISSELS
-    // vissels.features.forEach(async (element) => {
-    //   console.log("scraped vessel", element);
-    //   await storeVissels(
-    //     element.properties.name,
-    //     element.properties.imo,
-    //     element.geometry
-    //   );
-    // });
-
-    // // TODO: CREATE VISSEL HISTORIES
-    // visselsHistory.features.forEach(async (element) => {
-    //   console.log("scraped vessel history", element);
-    //   await storeVisselHistorie(
-    //     element.properties.name,
-    //     element.properties.imo,
-    //     element.geometry
-    //   );
-    // });
-
-    try {
-      const vesselWithPrefix = await getVesselWithPrefix();
-      console.log(vesselWithPrefix);
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    const vesselWithPrefix = await getVesselWithPrefix();
+    vesselWithPrefix.response.vessels.edges.forEach(async (element) => {
+      element.node;
+      const params = {
+        key: vesselWithPrefix.key,
+        imo: element.node.imo,
+        mmsi: element.node.mmsi,
+        name: element.node.name,
+        position: element.node.ais.position,
+      };
+      await storeVisselsWithPrefix(params);
+    });
   } catch (error) {
-    console.error("Error in main:", error);
+    console.error("Error:", error);
   }
 };
 

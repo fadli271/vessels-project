@@ -26,6 +26,12 @@
     },
     "histories": {
       "type": "json"
+    },
+    "vessel_prefix": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::vessel-prefix.vessel-prefix",
+      "inversedBy": "vessel_details"
     }
   }
 }

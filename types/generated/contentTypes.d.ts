@@ -726,6 +726,11 @@ export interface ApiVesselDetailVesselDetail extends Schema.CollectionType {
     name: Attribute.String;
     position: Attribute.JSON;
     histories: Attribute.JSON;
+    vessel_prefix: Attribute.Relation<
+      'api::vessel-detail.vessel-detail',
+      'manyToOne',
+      'api::vessel-prefix.vessel-prefix'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -788,6 +793,11 @@ export interface ApiVesselPrefixVesselPrefix extends Schema.CollectionType {
   };
   attributes: {
     prefix: Attribute.String;
+    vessel_details: Attribute.Relation<
+      'api::vessel-prefix.vessel-prefix',
+      'oneToMany',
+      'api::vessel-detail.vessel-detail'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

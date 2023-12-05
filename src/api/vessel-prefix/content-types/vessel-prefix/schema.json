@@ -13,6 +13,12 @@
   "attributes": {
     "prefix": {
       "type": "string"
+    },
+    "vessel_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::vessel-detail.vessel-detail",
+      "mappedBy": "vessel_prefix"
     }
   }
 }

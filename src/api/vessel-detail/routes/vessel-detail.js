@@ -1,9 +1,28 @@
-'use strict';
-
-/**
- * vessel-detail router
- */
-
-const { createCoreRouter } = require('@strapi/strapi').factories;
-
-module.exports = createCoreRouter('api::vessel-detail.vessel-detail');
+module.exports = {
+  routes: [
+    {
+      method: "GET",
+      path: "/vessel-detail/history",
+      handler: "vessel-detail.findVesselHistory",
+      config: {
+        policies: [],
+      },
+    },
+    {
+      method: "GET",
+      path: "/vessel-detail/:key",
+      handler: "vessel-detail.findVessel",
+      config: {
+        policies: [],
+      },
+    },
+    {
+      method: "GET",
+      path: "/vessel-detail/group/tracking",
+      handler: "vessel-detail.findGroupTracking",
+      config: {
+        policies: [],
+      },
+    },
+  ],
+};
