@@ -1,0 +1,19 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vessel_trackers",
+  "info": {
+    "singularName": "vessel-tracker",
+    "pluralName": "vessel-trackers",
+    "displayName": "vessel-tracker",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "history": {
+      "type": "json"
+    }
+  }
+}

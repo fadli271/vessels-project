@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vessel_prefixes",
+  "info": {
+    "singularName": "vessel-prefix",
+    "pluralName": "vessel-prefixes",
+    "displayName": "vessel-prefix"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "prefix": {
+      "type": "string"
+    }
+  }
+}

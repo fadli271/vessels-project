@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vessel_details",
+  "info": {
+    "singularName": "vessel-detail",
+    "pluralName": "vessel-details",
+    "displayName": "vessel-detail",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "imo": {
+      "type": "string"
+    },
+    "mmsi": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "position": {
+      "type": "json"
+    },
+    "histories": {
+      "type": "json"
+    }
+  }
+}
