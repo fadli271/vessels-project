@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { keys } = require("../../config/middlewares");
 
 const getToken = async () => {
   const apiUrl = "https://api.maritimeoptima.com/graphql-public";
@@ -29,10 +30,10 @@ const getToken = async () => {
 };
 
 const getVesselWithPrefix = async () => {
+  const allResponses = [];
   const prefixList = await strapi.db
     .query("api::vessel-prefix.vessel-prefix")
     .findMany();
-
   for (const element of prefixList) {
     const key = element.prefix;
 
@@ -66,29 +67,31 @@ const getVesselWithPrefix = async () => {
         requestData,
         requestConfig
       );
-      return {
+      allResponses.push({
         key,
         response: response.data.data,
-      };
+      });
     } catch (error) {
       console.error("Error:", error);
     }
   }
+
+  return allResponses;
 };
 
 const getPrefixId = async (key) => {
   const prefix = await strapi.db
-  .query("api::vessel-prefix.vessel-prefix")
-  .findOne({
-    where: { prefix: key}
-  });
-  return prefix
-}
+    .query("api::vessel-prefix.vessel-prefix")
+    .findOne({
+      where: { prefix: key },
+    });
+  return prefix;
+};
 
 const storeVisselsWithPrefix = async (params) => {
   const { imo, mmsi, name, position, key } = params;
 
-  const prefixId = await getPrefixId(key)
+  const prefixId = await getPrefixId(key);
   const existVessel = await strapi.db
     .query("api::vessel-detail.vessel-detail")
     .findOne({
@@ -132,39 +135,26 @@ const storeVisselsWithPrefix = async (params) => {
   console.log("SUCCESSS CREATED VESSEL");
 };
 
-const storeVisselHistorie = async (name, imo, geometry) => {
-  const existVessel = await strapi.db
-    .query("api::vessel-history.vessel-history")
-    .findOne({
-      select: ["imo"],
-      where: { imo: imo },
-    });
-
-  if (!existVessel) {
-    await strapi.db.query("api::vessel-history.vessel-history").create({
-      data: {
-        name: name,
-        imo: imo,
-        geometry: geometry,
-      },
-    });
-  }
-};
-
 const main = async () => {
   try {
     const vesselWithPrefix = await getVesselWithPrefix();
-    vesselWithPrefix.response.vessels.edges.forEach(async (element) => {
-      element.node;
-      const params = {
-        key: vesselWithPrefix.key,
-        imo: element.node.imo,
-        mmsi: element.node.mmsi,
-        name: element.node.name,
-        position: element.node.ais.position,
-      };
-      await storeVisselsWithPrefix(params);
-    });
+
+    for (const el of vesselWithPrefix) {
+      console.log("🚀 Start scraping vessel with prefix: ", el.key);
+
+      const promises = el.response.vessels.edges.map(async (element) => {
+        const params = {
+          key: el.key,
+          imo: element.node.imo,
+          mmsi: element.node.mmsi,
+          name: element.node.name,
+          position: element.node.ais.position,
+        };
+        await storeVisselsWithPrefix(params);
+      });
+
+      await Promise.all(promises);
+    }
   } catch (error) {
     console.error("Error:", error);
   }
